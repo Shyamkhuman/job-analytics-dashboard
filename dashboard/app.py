@@ -12,6 +12,7 @@ from collections import Counter
 import os
 import re
 from datetime import datetime
+import ast
 
 # Page config
 st.set_page_config(
@@ -72,7 +73,7 @@ def load_data() -> pd.DataFrame:
         # Parse skills_extracted if stored as string
         if 'skills_extracted' in df.columns:
             df['skills_extracted'] = df['skills_extracted'].apply(
-                lambda x: eval(x) if isinstance(x, str) and x != 'nan' else []
+                lambda x: ast.literal_eval(x) if isinstance(x, str) and x != 'nan' else []
             )
 
         return df

@@ -10,6 +10,7 @@ import seaborn as sns
 from typing import Dict, List, Optional, Tuple
 from collections import Counter
 import os
+import ast
 
 # Set style
 plt.style.use('seaborn-v0_8')
@@ -320,7 +321,7 @@ if __name__ == "__main__":
         # Ensure skills_extracted is parsed as list
         if 'skills_extracted' in df.columns:
             df['skills_extracted'] = df['skills_extracted'].apply(
-                lambda x: eval(x) if isinstance(x, str) else x)
+                lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
 
         visualizer = JobMarketVisualizer(df)
 

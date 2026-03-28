@@ -14,6 +14,15 @@ import re
 from datetime import datetime
 import json
 import sys
+import ast
+
+# Page config - MUST be the first Streamlit command
+st.set_page_config(
+    page_title="Real-Time Job Analytics",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 # Robust path handling to find project root and scraper
 try:
@@ -28,17 +37,9 @@ try:
     # Test if scraper is accessible
     from scraper.realtime_scraper import RealTimeJobScraper
 except ImportError as e:
-    st.error(f"â EECritical Error: Could not load the scraper module. {e}")
+    st.error(f"⚠️ Critical Error: Could not load the scraper module. {e}")
     st.info(f"Debug Info - Current Dir: {os.getcwd()} | Script Dir: {current_dir} | Project Root: {project_root}")
     st.stop()
-
-# Page config
-st.set_page_config(
-    page_title="Real-Time Job Analytics",
-    page_icon="ð",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
 # Get absolute paths for data
 DATA_PATH = os.path.join(project_root, 'data', 'jobs_data_latest.csv')
@@ -116,7 +117,7 @@ def load_data() -> pd.DataFrame:
         df = pd.read_csv(DATA_PATH)
         if 'skills_extracted' in df.columns:
             df['skills_extracted'] = df['skills_extracted'].apply(
-                lambda x: eval(x) if isinstance(x, str) and x != 'nan' else []
+                lambda x: ast.literal_eval(x) if isinstance(x, str) and x != 'nan' else []
             )
         return df
     except Exception as e:
