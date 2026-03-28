@@ -58,9 +58,17 @@ class JobMarketVisualizer:
 
         return fig
 
-    def create_skills_by_category(self, categories: Dict[str, List[str]],
+    def create_skills_by_category(self, categories: Dict[str, List[str]] = None,
                                    save: bool = True, show: bool = False) -> plt.Figure:
         """Create grouped bar chart of skills by category"""
+        if categories is None:
+            categories = {
+                'Programming': ['Python', 'Java', 'JavaScript', 'TypeScript', 'Go', 'Rust'],
+                'Web': ['React', 'Angular', 'Vue', 'Node.js', 'Django', 'Flask', 'HTML', 'CSS'],
+                'Data/AI': ['SQL', 'Machine Learning', 'Deep Learning', 'Pandas', 'NumPy', 'Tableau'],
+                'DevOps': ['Docker', 'Kubernetes', 'Terraform', 'CI/CD', 'AWS', 'Azure', 'GCP']
+            }
+
         all_skills = [skill for skills in self.df['skills_extracted'].dropna()
                       for skill in skills]
         skill_counts = Counter(all_skills)
@@ -73,10 +81,13 @@ class JobMarketVisualizer:
 
         for category, skills_list in categories.items():
             for skill in skills_list:
-                if skill in skill_counts:
-                    y_labels.append(f"{category}\n{skill}")
+                if skill in skill_counts and skill_counts[skill] > 0:
+                    y_labels.append(f"{category}: {skill}")
                     y_values.append(skill_counts[skill])
-            y_pos += 1
+
+        if not y_values:
+            print("No skills found for specified categories")
+            return None
 
         colors = plt.cm.Set3(np.linspace(0, 1, len(y_labels)))
         bars = ax.barh(y_labels, y_values, color=colors)
@@ -84,6 +95,11 @@ class JobMarketVisualizer:
         ax.set_xlabel('Number of Job Postings', fontsize=12)
         ax.set_title('Skills Demand by Category', fontsize=14, fontweight='bold')
         ax.invert_yaxis()
+
+        # Add value labels
+        for bar, count in zip(bars, y_values):
+            ax.text(bar.get_width() + 0.1, bar.get_y() + bar.get_height()/2,
+                   str(int(count)), va='center', fontsize=9)
 
         plt.tight_layout()
 

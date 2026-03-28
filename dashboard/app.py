@@ -44,14 +44,28 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-def load_data(data_dir: str = '../data') -> pd.DataFrame:
+def load_data() -> pd.DataFrame:
     """Load the latest job data from CSV files"""
     try:
+        # Get the directory where the script is located
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # Project root is one level up
+        project_root = os.path.dirname(current_dir)
+        data_dir = os.path.join(project_root, 'data')
+        
+        if not os.path.exists(data_dir):
+            return None
+
         files = [f for f in os.listdir(data_dir) if f.endswith('.csv')]
         if not files:
             return None
 
-        latest_file = max(files)
+        # Prefer jobs_data_latest.csv if it exists
+        if 'jobs_data_latest.csv' in files:
+            latest_file = 'jobs_data_latest.csv'
+        else:
+            latest_file = max(files)
+            
         df = pd.read_csv(os.path.join(data_dir, latest_file))
 
         # Parse skills_extracted if stored as string
@@ -140,10 +154,10 @@ def show_dashboard(df):
     st.header("Market Overview")
 
     # Key metrics
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.metric("Total Jobs", f"{len(df):,}")
+        st.metric("Jobs", f"{len(df):,}")
 
     with col2:
         st.metric("Unique Companies", f"{df['company'].nunique():,}")
@@ -151,16 +165,13 @@ def show_dashboard(df):
     with col3:
         st.metric("Locations", f"{df['location'].nunique():,}")
 
-    with col4:
-        st.metric("Data Sources", f"{df['source'].nunique() if 'source' in df.columns else 1}")
-
     st.markdown("---")
 
     # Top skills chart
     col1, col2 = st.columns([2, 1])
 
     with col1:
-        st.subheader("🔥 Top 15 In-Demand Skills")
+        st.subheader("Top 15 In-Demand Skills")
 
         all_skills = [skill for skills in df['skills_extracted'].dropna() for skill in skills]
         skill_counts = Counter(all_skills).most_common(15)
@@ -182,7 +193,7 @@ def show_dashboard(df):
         st.pyplot(fig)
 
     with col2:
-        st.subheader("📊 Experience Distribution")
+        st.subheader("Experience Distribution")
 
         experience_keywords = {
             'Entry': ['fresher', 'entry level', 'junior', 'trainee', '0-2 years'],
@@ -363,41 +374,7 @@ def show_salary_trends(df):
 
     st.markdown("---")
 
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.subheader("Salary Distribution")
-
-        fig, ax = plt.subplots(figsize=(8, 5))
-        ax.hist(salaries, bins=30, color='skyblue', edgecolor='black', alpha=0.7)
-        ax.axvline(np.mean(salaries), color='red', linestyle='--',
-                  label=f'Mean: {np.mean(salaries):,.0f}')
-        ax.axvline(np.median(salaries), color='green', linestyle='--',
-                  label=f'Median: {np.median(salaries):,.0f}')
-        ax.set_xlabel('Salary')
-        ax.set_ylabel('Frequency')
-        ax.set_title('Salary Distribution Histogram')
-        ax.legend()
-        ax.grid(True, alpha=0.3)
-
-        plt.tight_layout()
-        st.pyplot(fig)
-
-    with col2:
-        st.subheader("Salary Box Plot")
-
-        fig, ax = plt.subplots(figsize=(8, 5))
-        ax.boxplot(salaries, vert=False, patch_artist=True,
-                  boxprops=dict(facecolor='lightblue'))
-        ax.set_xlabel('Salary')
-        ax.set_title('Salary Distribution (Box Plot)')
-        ax.grid(True, alpha=0.3)
-
-        plt.tight_layout()
-        st.pyplot(fig)
-
     # Salary by skill
-    st.markdown("---")
     st.subheader("💰 Salary by Top Skills")
 
     all_skills = [skill for skills in df['skills_extracted'].dropna() for skill in skills]

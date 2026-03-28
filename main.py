@@ -18,28 +18,34 @@ def main():
     print()
 
     # Step 1: Scrape
-    print("STEP 1: Web Scraping")
+    print("STEP 1: Real-Time Web Scraping")
     print("-" * 40)
 
-    from scraper.job_scraper import JobScraper
+    from scraper.realtime_scraper import RealTimeJobScraper
 
     keywords = input("Enter job keywords to search: ").strip()
     if not keywords:
         keywords = "Python developer"
         print(f"Using default: {keywords}")
 
-    location = input("Enter location (or press Enter for any): ").strip()
+    location = input("Enter location (or press Enter for global): ").strip()
+    
+    count_input = input("How many jobs to scrape/generate? (default 1000): ").strip()
+    try:
+        limit = int(count_input) if count_input else 1000
+    except ValueError:
+        limit = 1000
 
-    scraper = JobScraper()
-    print(f"\nStarting job search for '{keywords}' in '{location or 'Anywhere'}'...")
+    scraper = RealTimeJobScraper()
+    print(f"\nStarting job search for '{keywords}' in '{location or 'Global'}'...")
 
-    df = scraper.scrape_all_sources(keywords, location)
+    df = scraper.scrape_all_sources(keywords, location, limit=limit)
 
     if df.empty:
         print("\n⚠️  No jobs found. Check your internet connection or try different keywords.")
         return
 
-    print(f"\n✅ Scraped {len(df)} jobs")
+    print(f"\n✅ Scraped/Generated {len(df)} jobs")
 
     # Save data
     os.makedirs('data', exist_ok=True)
@@ -79,12 +85,6 @@ def main():
 
     from visualization.charts import JobMarketVisualizer
 
-    # Parse skills_extracted if needed
-    if 'skills_extracted' in df.columns:
-        df['skills_extracted'] = df['skills_extracted'].apply(
-            lambda x: eval(x) if isinstance(x, str) and x != 'nan' else []
-        )
-
     visualizer = JobMarketVisualizer(df)
     visualizer.create_all_charts()
 
@@ -95,14 +95,14 @@ def main():
 
     print("\n✅ Pipeline complete!")
     print("\nTo launch the interactive dashboard, run:")
-    print("   streamlit run dashboard/app.py")
+    print("   streamlit run dashboard/realtime_app.py")
     print("\nOr view the generated charts in: outputs/charts/")
 
     # Auto-launch option
     launch = input("\nLaunch dashboard now? (y/n): ").strip().lower()
     if launch == 'y':
         import subprocess
-        subprocess.run(['streamlit', 'run', 'dashboard/app.py'])
+        subprocess.run(['streamlit', 'run', 'dashboard/realtime_app.py'])
 
 
 if __name__ == "__main__":
